@@ -1,0 +1,36 @@
+name: roles/TAMCSPMSecurityAudit
+title: TAM Security Audit
+includedPermissions:
+  - cloudasset.assets.listResource
+  - cloudkms.cryptoKeys.list
+  - cloudkms.keyRings.list
+  - cloudsql.instances.list
+  - cloudsql.users.list
+  - compute.autoscalers.list
+  - compute.backendServices.list
+  - compute.disks.list
+  - compute.firewalls.list
+  - compute.healthChecks.list
+  - compute.images.list
+  - compute.instanceGroups.list
+  - compute.instances.getIamPolicy
+  - compute.instances.list
+  - compute.networks.list
+  - compute.projects.get
+  - compute.resourcePolicies.list
+  - compute.snapshots.list
+  - compute.securityPolicies.list
+  - compute.subnetworks.list
+  - compute.targetHttpProxies.list
+  - compute.urlMaps.list
+  - container.clusters.list
+  - dns.managedZones.list
+  - iam.serviceAccountKeys.list
+  - iam.serviceAccounts.list
+  - logging.logMetrics.list
+  - logging.sinks.list
+  - monitoring.alertPolicies.list
+  - storage.buckets.getIamPolicy
+  - storage.buckets.list
+stage: GA
+
