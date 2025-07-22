@@ -15,7 +15,7 @@ parser.add_argument('--config', {
 
 parser.add_argument('--plugin', {
     help: 'The specific plugin(s) to run. Use "category/pluginName" for a single plugin (e.g., "compute/instanceLevelSSHOnly") or "category" to run all plugins in that category (e.g., "compute").',
-    default: 'compute/automaticRestartEnabled' 
+    default: 'compute' 
     //change default back to 'compute' after
     // /automaticRestartEnabled
 });
