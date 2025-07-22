@@ -1,63 +1,94 @@
 const helpers = require('../../../helpers/google');
 
-// This local function makes the plugin self-contained.
-const getRegionFromZone = (zone) => {
-    if (!zone) return null;
-    const parts = zone.split('-');
-    if (parts.length < 2) return zone;
-    return parts.slice(0, -1).join('-');
-};
-
 module.exports = {
     title: 'Disk In Use',
-    category: 'compute', // Set to match the 'compute' folder
+    category: 'Compute',
     domain: 'Compute',
     severity: 'Medium',
     description: 'Ensure that there are no unused Compute disks.',
     more_info: 'Unused Compute disks should be deleted to prevent accidental exposure of data and to avoid unnecessary billing.',
     link: 'https://cloud.google.com/compute/docs/disks',
     recommended_action: 'Delete unused Compute disks.',
-    apis: ['disks:aggregatedList', 'projects:get'],
+    apis: ['disks:aggregatedList'],
     realtime_triggers: ['compute.disks.insert', 'compute.disks.delete'],
 
     async run(collection, settings) {
         const results = [];
+        const regions = helpers.regions();
+
+                // --- DEBUGGING START ---
+                console.log('--- Disk In Use Plugin Debugging ---');
+                console.log('Received collection object structure:');
+                // Only log relevant parts if collection is very large, or filter sensitive info
+                console.log('collection.projects?.get?.global:', JSON.stringify(collection.projects?.get?.global, null, 2));
+                console.log('collection.disks?.aggregatedList?.global:', JSON.stringify(collection.disks?.aggregatedList?.global, null, 2));
+                console.log('--- End Debugging ---');
+                // --- DEBUGGING END ---
+        
+        
+
+
         const projects = collection.projects?.get?.global;
 
         if (!projects || projects.err || !projects.data?.length) {
-            helpers.addResult(results, 3, 'Unable to query for projects: ' + helpers.addError(projects), 'global', null, projects?.err);
+            helpers.addResult(results, 3,
+                'Unable to query for projects: ' + helpers.addError(projects), 'global', null, null, projects?.err);
             return results;
         }
 
         const project = projects.data[0].name;
-        const disksResponse = collection.disks?.aggregatedList?.global;
 
-        if (!disksResponse || disksResponse.err || !disksResponse.data) {
-            helpers.addResult(results, 3, 'Unable to query compute disks: ' + helpers.addError(disksResponse), 'global', null, disksResponse?.err);
+        const disks = collection.disks?.aggregatedList?.global;
+
+        if (!disks) {
+            helpers.addResult(results, 3, 'Unable to query compute disks', 'global');
             return results;
         }
-        
-        const allDisksByScope = disksResponse.data[0];
+
+        if (disks.err || !disks.data) {
+            helpers.addResult(results, 3, 'Unable to query compute disks', 'global', null, null, disks.err);
+            return results;
+        }
+
+        const allDisksByScope = disks.data[0];
 
         if (!allDisksByScope || Object.keys(allDisksByScope).length === 0) {
             helpers.addResult(results, 0, 'No compute disks found', 'global');
             return results;
         }
-        
-        for (const scope of Object.keys(allDisksByScope)) {
-            const diskData = allDisksByScope[scope];
 
-            if (diskData.warning || !diskData.disks || !diskData.disks.length) {
+        for (const region of regions.all_regions) {
+            const zonesInRegion = regions.zones[region] || [];
+            let anyDisksFoundInRegion = false;
+            const collectedDisksForRegion = [];
+
+            // Get regional disks
+            const regionalDisksData = allDisksByScope[`regions/${region}`];
+            if (regionalDisksData?.disks?.length) {
+                anyDisksFoundInRegion = true;
+                const regionalDisks = regionalDisksData.disks.map(disk => ({ ...disk, locationType: 'region', location: region }));
+                collectedDisksForRegion.push(...regionalDisks);
+            }
+
+            // Get zonal disks
+            for (const zone of zonesInRegion) {
+                const zonalDisksData = allDisksByScope[`zones/${zone}`];
+                if (zonalDisksData?.disks?.length) {
+                    anyDisksFoundInRegion = true;
+                    const zonalDisks = zonalDisksData.disks.map(disk => ({ ...disk, locationType: 'zone', location: zone }));
+                    collectedDisksForRegion.push(...zonalDisks);
+                }
+            }
+
+            if (!anyDisksFoundInRegion) {
+                helpers.addResult(results, 0, `No compute disks found in region ${region}`, region);
                 continue;
             }
-            
-            const [locationType, location] = scope.split('/');
-            const region = locationType === 'regions' ? location : getRegionFromZone(location);
 
-            for (const disk of diskData.disks) {
+            for (const disk of collectedDisksForRegion) {
                 if (!disk.id || !disk.creationTimestamp) continue;
-                
-                const resource = helpers.createResourceName('disks', disk.name, project, locationType.slice(0, -1), location);
+
+                const resource = helpers.createResourceName('disks', disk.name, project, disk.locationType, disk.location);
 
                 if (disk.users && disk.users.length) {
                     helpers.addResult(results, 0, 'Disk is in use', region, resource);
