@@ -1,4 +1,7 @@
 const helpers = require('../../../helpers/google');
+//no reliance on callbacks
+//replacing all the callback sections, make everything else the same
+
 
 module.exports = {
     title: 'Instance Level SSH Only',
@@ -60,9 +63,11 @@ module.exports = {
                     let blocksProjectKeys = false;
                     if (instance.metadata && instance.metadata.items) {
                         blocksProjectKeys = instance.metadata.items.some(
+                            //checks metadata of the particylar instance and whether theer is a vulnerability of not
                             metaItem => metaItem.key === 'block-project-ssh-keys' &&
                                         String(metaItem.value).toUpperCase() === 'TRUE'
                         );
+                        //^ adds it to the helper
                     }
 
                     const resource = helpers.createResourceName('instances', instance.name, project, 'zone', zone);

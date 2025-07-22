@@ -15,7 +15,7 @@ parser.add_argument('--config', {
 
 parser.add_argument('--plugin', {
     help: 'The specific plugin(s) to run. Use "category/pluginName" for a single plugin (e.g., "compute/instanceLevelSSHOnly") or "category" to run all plugins in that category (e.g., "compute").',
-    default: 'compute/instanceLevelSSHOnly'
+    default: 'compute/enableUsageExport'
 });
 
 async function main() {
