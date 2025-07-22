@@ -5,7 +5,7 @@ const path = require('path');
 console.log('CloudSploit Refactored for Google Cloud');
 
 const parser = new ArgumentParser({
-    description: 'CloudSploit Refactored for GCP'git 
+    description: 'CloudSploit Refactored for GCP'
 });
 
 parser.add_argument('--config', {
