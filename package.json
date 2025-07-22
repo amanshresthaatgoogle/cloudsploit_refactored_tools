@@ -4,10 +4,10 @@
     "description": "A refactored version of CloudSploit for GCP using async/await.",
     "main": "index.js",
     "scripts": {
-      "start": "node index.js"
+        "start": "node index.js"
     },
     "dependencies": {
-      "argparse": "^2.0.1",
-      "googleapis": "^100.0.0"
+        "argparse": "^2.0.1",
+        "googleapis": "^100.0.0"
     }
-  }
+}
